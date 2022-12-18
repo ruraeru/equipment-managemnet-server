@@ -1,0 +1,35 @@
+<ul>
+    <a href="/auth/kakao">
+        <span>KAKAO LOGIN</span>
+    </a>
+
+    <li onclick="kakaoLogout();">
+        <a href="javascript:void(0)">
+            <span>KAKAO LOGOUT</span>
+        </a>
+    </li>
+
+</ul>
+
+<script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+<script>
+    window.Kakao.init('fa3a47a9295060b813062f8390ff17e0'); //발급받은 키 중 javascript키를 사용해준다.
+    console.log(Kakao.isInitialized()); // sdk초기화여부판단
+
+    //카카오로그아웃  
+    function kakaoLogout() {
+        if (Kakao.Auth.getAccessToken()) {
+            Kakao.API.request({
+                url: '/v1/user/unlink',
+                success: function (response) {
+                    console.log("logout");
+                    console.log(response)
+                },
+                fail: function (error) {
+                    console.log(error)
+                },
+            })
+            Kakao.Auth.setAccessToken(undefined)
+        }
+    }  
+</script>

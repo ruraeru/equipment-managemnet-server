@@ -34,12 +34,12 @@ module.exports = (sequelize, DataTypes) => {
             },
 
             user_created_at : {
-                // allowNull : false,
+                allowNull : false,
                 type: DataTypes.DATE
             },
 
             user_license : {
-                //allowNull: false,
+                allowNull: false,
                 type : DataTypes.INTEGER
             }
         },

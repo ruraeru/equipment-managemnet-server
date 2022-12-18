@@ -7,5 +7,7 @@ const authUtil = require('../../middleware/authorization').checkToken;
 router.post('/rentalTool', authUtil, rentalController.rentalTool);
 // 기자재 반납
 router.post('/returnTool', authUtil, rentalController.returnTool);
+// 기자재 연장
+router.post('/extension', /*authUtil,*/  rentalController.extension);
 
 module.exports = router;

@@ -21,11 +21,6 @@ module.exports = (sequelize, DataTypes) => {
             rental_state : {
                 allowNull: false,
                 type : DataTypes.STRING(255)
-            },
-            
-            rental_is_extended : {
-                allowNull: false,
-                type: DataTypes.BOOLEAN
             }
         },
         {

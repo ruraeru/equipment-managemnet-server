@@ -8,6 +8,8 @@ router.post('/login', userController.login);
 router.post('/signUp', userController.signUp);
 //회원 탈퇴
 router.get('/deleteUser/:user_id', userController.deleteUser);
+// 아이디 찾기
+router.get('/findId', userController.findId);
 //비밀번호 변경
 router.post('/changePw', userController.changePw);
 //개인정보 수정

@@ -42,6 +42,8 @@ db.Rental = require('./rental')(sequelize, Sequelize);
 db.Repair = require('./repair')(sequelize, Sequelize);
 db.University = require('./university')(sequelize, Sequelize);
 db.Department = require('./department')(sequelize, Sequelize);
+db.Log = require('./log')(sequelize, Sequelize);
+db.Img = require('./img')(sequelize, Sequelize);
 
 require('./user/foreignkey')(db);
 require('./tool/foreignkey')(db);
@@ -49,5 +51,7 @@ require('./rental/foreignkey')(db);
 require('./repair/foreignkey')(db);
 require('./university/foreignkey')(db);
 require('./department/foreignkey')(db);
+require('./log/foreignkey')(db);
+require('./img/foreignkey')(db);
 
 module.exports = db;

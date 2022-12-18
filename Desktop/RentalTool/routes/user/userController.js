@@ -3,10 +3,7 @@ const path = require('path');
 const salt = require(path.join(__dirname, '../../config', 'config.json')).salt;
 const hashing = require(path.join(__dirname, '../../config', 'hashing.js'));
 const issueToken = require('../../jwt/jwt').sign;
-const generateRandom = (min, max) => {
-    let ranNum = Math.floor(Math.random() * (max - min + 1)) + min;
-    return ranNum;
-}
+const errorCode = require('../../config/errorCode');
 
 module.exports = {
     login: (req, res) => {
@@ -26,6 +23,23 @@ module.exports = {
                     obj['suc'] = false;
                     obj['err'] = "login err";
                     res.send(false);
+                }
+            })
+    },
+
+    deleteUser: (req, res) => {
+        const userId = req.params.user_id;
+
+        userService.deleteUser(userId)
+            .then(result => {
+                let obj = {};
+                if (result) {
+                    obj['suc'] = true;
+                    obj['deleteUser'] = result;
+                    res.send(obj);
+                } else {
+                    obj['suc'] = false;
+                    obj['err'] = "delete user err";
                 }
             })
     },
@@ -55,22 +69,28 @@ module.exports = {
             })
     },
 
-    deleteUser: (req, res) => {
-        const userId = req.params.user_id;
-
-        userService.deleteUser(userId)
-            .then(result => {
-                let obj = {};
-                if (result) {
-                    obj['suc'] = true;
-                    obj['deleteUser'] = result;
-                    res.send(obj);
-                } else {
-                    obj['suc'] = false;
-                    obj['err'] = "delete user err";
-                }
-            })
+    findId : (req, res) => {
+        const Email =  req.query.user_email;
+        
+        userService.findId(Email)
+        .then((result) => {
+            let obj = {}
+            if (result == false) {
+                obj["suc"] = false;
+                obj["error"] = errorCode.E08.message;
+                res.send(obj);
+            } else if (result == "err"){
+                obj["suc"] = false;
+                obj["error"] = errorCode.E06.message;
+                res.send(obj);
+            } else{
+                obj['suc'] = true;
+                obj['result'] = result;
+                res.send(obj);
+            }
+        })
     },
+
 
     changePw: (req, res) => {
         const body = req.body;
@@ -79,13 +99,17 @@ module.exports = {
         userService.changePw(body, hash)
             .then(result => {
                 let obj = {};
-                if (result) {
-                    obj['suc'] = true;
-                    obj['changePw'] = result;
+                if (result == false) {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E10.message;
                     res.send(obj);
-                } else {
-                    obj['suc'] = false;
-                    obj['err'] = "change pw err";
+                } else if (result == "err"){
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E06.message;
+                    res.send(obj);
+                } else{
+                    obj['suc'] = true;
+                    res.send(obj);
                 }
             })
     },

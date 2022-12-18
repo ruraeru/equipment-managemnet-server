@@ -1,18 +1,10 @@
 const {
-    User,
-    University,
-    Department
+    User
 } = require("../../models");
 const moment = require("moment");
 
 require("moment-timezone");
 moment.tz.setDefault("Asia/Seoul");
-const mail = require('../../middleware/mail');
-const university = require("../../models/university");
-const generateRandom = (min, max) => {
-    let ranNum = Math.floor(Math.random() * (max - min + 1)) + min;
-    return ranNum;
-}
 
 module.exports = {
     login: (body/*hash*/) => {
@@ -71,55 +63,6 @@ module.exports = {
         });
     },
 
-    viewUniversity: () => {
-        return new Promise((resolve) => {
-            University.findAll({
-                order:[['university_name', 'ASC']],
-                attributes:['university_name']
-            })
-            .then((result) => {
-                console.log(result);
-                result !== null ? resolve(result) : resolve(false);
-            })
-            .catch((err) => {
-                resolve(false);
-                console.log(err);
-            });
-        })
-    },
-
-    viewDepartment: (universityName) => {
-        return new Promise((resolve) => {
-            University.findAll({
-                where: { university_name: universityName }
-            })
-            .then((result) => {
-                Department.findAll({
-                    order:[['department_name', 'ASC']],
-                    attributes : ['department_name']
-                })
-                console.log(result);
-                result !== null ? resolve(result) : resolve(false);
-            })
-            .catch((err) => {
-                resolve(false);
-                console.log(err);
-            });
-        })
-    },
-
-    findId: (body) => {
-        return new Promise((resolve) => {
-            User.findOne({
-                where: {
-                    name: body.user_name,
-                    email: body.user_email,
-                },
-                attributes: ["user_id"]
-            })
-        })
-    },
-
     deleteUser: (userId) => {
         return new Promise((resolve) => {
             User.destroy({
@@ -138,21 +81,38 @@ module.exports = {
         });
     },
 
+    findId: (Email) => {
+        return new Promise((resolve) => {
+            User.findOne({
+                where: {
+                    user_email: Email,
+                },
+                attributes: ["user_id", "user_name"]
+            })
+            .then((result) => {
+                console.log(result);
+                result !== null ? resolve(result) : resolve(false);
+              }).catch((err) => {
+                resolve("err");
+                console.log(err);
+              });
+        })
+    },
 
     changePw: (body, hash) => {
         return new Promise((resolve) => {
             User.update(
-                { password: hash },
+                { user_pw: hash },
                 {
                     where: {
-                        user_id: body.user_id,
+                        user_email: body.user_email,
                     },
                 })
                 .then((result) => {
                     console.log(result);
                     result !== null ? resolve(result) : resolve(false);
                 }).catch((err) => {
-                    resolve(false);
+                    resolve("err");
                     console.log(err);
                 });
         })

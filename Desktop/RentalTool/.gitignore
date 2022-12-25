@@ -1,7 +1,0 @@
-/config/config.json
-/config/db.json
-/config/hashing.js
-/config/jwt.js
-/config/senderInfo.json
-/node_modules/
-/views/index.html

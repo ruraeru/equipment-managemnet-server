@@ -21,11 +21,11 @@ module.exports = {
                     obj["suc"] = false;
                     obj["error"] = errorCode.E07.message;
                     res.send(obj);
-                } else if (result == "err"){
+                } else if (result == "err") {
                     obj["suc"] = false;
                     obj["error"] = errorCode.E06.message;
                     res.send(obj);
-                }else if (result == errorCode.E05.message ) {
+                } else if (result == errorCode.E05.message) {
                     obj["suc"] = false;
                     obj["error"] = result;
                     res.send(obj);
@@ -55,7 +55,7 @@ module.exports = {
                         obj["suc"] = false;
                         obj["error"] = errorCode.E07.message;
                         res.send(obj);
-                    } else if (result == "err"){
+                    } else if (result == "err") {
                         obj["suc"] = false;
                         obj["error"] = errorCode.E06.message;
                         res.send(obj);
@@ -79,7 +79,7 @@ module.exports = {
 
         if (body.rental_is_extended == true) {
             obj["suc"] = false;
-            obj["result"] = "연장은 한번까지 가능합니다. " 
+            obj["result"] = "연장은 한번까지 가능합니다. "
             // obj["result"] = errorCode.E04.message;
             // obj["code"] = "E04"
             res.send(obj);
@@ -89,21 +89,73 @@ module.exports = {
                     if (result == false) {
                         obj["suc"] = false;
                         obj["error"] = errorCode.E07.message;
-                    } else if (result == "err"){
+                        res.send(obj);
+                    } else if (result == "err") {
                         obj["suc"] = false;
                         obj["error"] = errorCode.E06.message;
+                        res.send(obj);
                     } else {
                         obj['suc'] = true;
                         obj['extension'] = result;
+                        res.send(obj);
                     }
-                    res.send(obj);
                 })
         }
     },
 
-    checkRental: (req, res) => {
-        const departmentId = req.params.department_id;
+    myCurrentRentalList: (req, res) => {
+        const userId = req.params.user_id;
+        const page = req.params.page;
 
-        rentalService.checkRental(departmentId)
+        // offset: 이전 item 10개를 skip
+        let offset;
+        if (page > 0) {
+            offset = 12 * (page - 1);
+        }
+
+        rentalService.myCurrentRentalList(userId, offset)
+            .then(result => {
+                if (result == false) {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E07.message;
+                    res.send(obj);
+                } else if (result == "err") {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E06.message;
+                    res.send(obj);
+                } else {
+                    res.send(result);
+                }
+            })
+    },
+
+    myAllRentalList: (req, res) => {
+        const userId = req.params.user_id;
+        const page = req.params.page;
+
+        // offset: 이전 item 10개를 skip
+        let offset;
+        if (page > 0) {
+            offset = 12 * (page - 1);
+        }
+
+        rentalService.myAllRentalList(userId, offset)
+            .then(result => {
+
+                let obj = {};
+                if (result == false) {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E07.message;
+                    res.send(obj);
+                } else if (result == "err") {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E06.message;
+                    res.send(obj);
+                } else {
+                    obj["suc"] = true;
+                    obj["result"] = result;
+                    res.send(obj);
+                }
+            })
     }
 }

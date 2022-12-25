@@ -1,6 +1,6 @@
 const userService = require('./userService');
 const path = require('path');
-const salt = require(path.join(__dirname, '../../config', 'config.json')).salt;
+const salt = require('../../config/config.json').salt;
 const hashing = require(path.join(__dirname, '../../config', 'hashing.js'));
 const issueToken = require('../../jwt/jwt').sign;
 const errorCode = require('../../config/errorCode');
@@ -8,9 +8,9 @@ const errorCode = require('../../config/errorCode');
 module.exports = {
     login: (req, res) => {
         const body = req.body;
-        //const hash = hashing.enc(body.user_pw, salt);
+        const hash = hashing.enc(body.user_pw, salt);
 
-        userService.login(body/*, hash*/)
+        userService.login(body, hash)
             .then(result => {
                 let obj = {};
                 if (result) {

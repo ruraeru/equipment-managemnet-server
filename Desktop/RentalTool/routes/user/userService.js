@@ -2,17 +2,18 @@ const {
     User
 } = require("../../models");
 const moment = require("moment");
+const hashing = require("../../config/hashing");
 
 require("moment-timezone");
 moment.tz.setDefault("Asia/Seoul");
 
 module.exports = {
-    login: (body/*hash*/) => {
+    login: (body,hash) => {
         return new Promise((resolve) => {
             User.findOne({
                 where: {
                     user_id: body.user_id,
-                    user_pw: body.user_pw
+                    user_pw: hash
                 }
             })
                 .then((result) => {

@@ -1,8 +1,9 @@
 const {
-    Tool, Img, Department, Rental
+    Tool, Img, Department, Rental, User
 } = require('../../models');
 
 const moment = require("moment");
+const tool = require('../../models/tool');
 
 require("moment-timezone");
 moment.tz.setDefault("Asia/Seoul");
@@ -82,17 +83,57 @@ module.exports = {
         })
       })
     },
-
-    viewTool : (toolId) =>{
+    
+    viewTool :  (toolId) =>{
       return new Promise((resolve) => {
         Tool.findOne({
-          where: {tool_id : toolId},
-          attributes: { exclude: ['tool_update_at']},
-          include : {
-            model : Rental, // 렌탈 스테이트가 대여. 인것을 찾아야함
-            attributes : ['user_id','rental_date','rental_due_date']
-          }
+          where : {tool_id : toolId},
+          attributes: {exclude:['tool_change_date', 'department_id', 'tool_state']},
         })
+        .then((result) => {
+          result != null ? resolve(result): resolve(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          resolve("err");
+        })
+      })
+    },
+
+    managerViewTool : (toolId) =>{
+      return new Promise((resolve) => {
+        Rental.findAll({
+          where : {tool_id : toolId},
+          order: [['rental_id', 'DESC']],
+          limit: 1,
+          include : [{
+            model: Tool,
+            attributes : {exclude:['tool_change_date', 'department_id', 'tool_state']},
+          },
+          {
+            model: User,
+            attributes : ['user_name']
+          }]
+        })
+        .then((result) => {
+          result != null ? resolve(result): resolve(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          resolve("err");
+        })
+      })
+    },
+
+    cannotRental: (toolId) => {
+      return new Promise((resolve) => {
+        Tool.update({
+            tool_state: "대여 불가"
+        },
+        {
+          where: {tool_id: toolId}
+        }
+        )
         .then((result) => {
           result != null ? resolve(result): resolve(false);
         })

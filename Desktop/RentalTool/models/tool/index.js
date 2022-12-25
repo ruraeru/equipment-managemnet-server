@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
             tool_code : {
                 allowNull : false,
                 unique: true,
-                type: DataTypes.INTEGER
+                type: DataTypes.STRING(255)
             },
 
             tool_name : {
@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING(255)
             },
 
-            tool_change_date : {
+            tool_update_at : {
                 allowNull : false,
                 type: DataTypes.DATE
             },

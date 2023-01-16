@@ -1,5 +1,5 @@
 const {
-  Tool, Img, Department, Rental, User, Sequelize: {Op}
+  Tool, Img, Department, Rental, User, Sequelize: { Op }
 } = require('../../models');
 
 const moment = require("moment");
@@ -15,7 +15,6 @@ module.exports = {
         where: {
           [Op.or]: [
             { tool_id: body.tool_id },
-            { tool_code: body.tool_code }
           ]
         },
         defaults: {
@@ -58,7 +57,7 @@ module.exports = {
             }
 
             resolve(obj);
-          } else if(!result[1]){
+          } else if (!result[1]) {
             console.log(result[0]);
             resolve("EXIST");
           } else {
@@ -68,10 +67,10 @@ module.exports = {
         })
 
 
-      .catch((err) => {
-        console.log(err);
-        resolve("err")
-      })
+        .catch((err) => {
+          console.log(err);
+          resolve("err")
+        })
     })
   },
 
@@ -92,7 +91,35 @@ module.exports = {
           // let obj = {};
           // obj['result'] = result;
           // obj['result'] = 
-          result != null ? resolve(result) : resolve(false);
+          let obj_sort = result.filter(item => item.tool_state == "대여불가")
+
+          result.forEach(element => {
+            if (element.tool_state == "대여불가") {
+              delete element
+            }
+          });
+          // for(i = 0; i < result.length; i++){
+          //   if (result[i].tool_state == "대여불가") {
+          //     delete result[i]
+          //   }
+          // }
+
+          // console.log(result)
+          // result.push(obj_sort)
+
+          obj_sort.forEach(element => {
+            result.push(element)
+          });
+
+          let obj = [];
+
+          result.forEach(element => {
+            if(element != null)
+            {
+              obj.push(element);
+            }
+          });
+          obj != null ? resolve(obj) : resolve(false);
         })
         .catch((err) => {
           console.log(err);
@@ -120,27 +147,27 @@ module.exports = {
 
               img != null ? obj["image"] = img : obj["image"] = false;
               console.log(license)
-              if(license < 3){
+              if (license < 3) {
                 Rental.findAll({
-                  where:{ tool_id : toolId},
+                  where: { tool_id: toolId },
                   attributes: ['rental_date', 'rental_due_date'],
                   order: [['rental_id', 'DESC']],
                   limit: 1,
-                  include :[{
+                  include: [{
                     model: User,
-                    attributes : ['user_name']
+                    attributes: ['user_name']
                   }]
                 })
-                .then((rentalResult) => {
-                  console.log(rentalResult)
-                  if(rentalResult[0] != null){
-                    obj['rental'] = rentalResult[0];
-                  }else{
-                    obj['rental'] = false
-                  }
-                  resolve(obj);
-                })
-              }else{
+                  .then((rentalResult) => {
+                    console.log(rentalResult)
+                    if (rentalResult[0] != null) {
+                      obj['rental'] = rentalResult[0];
+                    } else {
+                      obj['rental'] = false
+                    }
+                    resolve(obj);
+                  })
+              } else {
                 resolve(obj);
               }
             })
@@ -162,29 +189,29 @@ module.exports = {
           attributes: ['rental_date', 'rental_due_date'],
           // order: [['rental_id', 'DESC']],
           limit: 1,
-          include :[{
+          include: [{
             model: User,
-            attributes : ['user_name']
+            attributes: ['user_name']
           }]
         }],
 
       })
         .then((result) => {
-          
+
           let obj = {};
           let tool = {};
 
           console.log(result)
           tool['suc'] = true;
-          tool['result'] =  {
-            "tool_id" : result.tool_id,
+          tool['result'] = {
+            "tool_id": result.tool_id,
             "tool_use_division": result.tool_use_division,
             "tool_code": result.tool_code,
             "tool_name": result.tool_name,
             "tool_purchase_division": result.tool_purchase_division,
             "tool_purchase_date": result.tool_purchase_date,
             "tool_standard": result.tool_standard,
-            "tool_state" : result.tool_state
+            "tool_state": result.tool_state
           };
           obj['suc'] = true;
           obj['rental_date'] = result.rentals.rental_date;
@@ -211,12 +238,51 @@ module.exports = {
   cannotRental: (toolId) => {
     return new Promise((resolve) => {
       Tool.update({
-        tool_state: "대여 불가"
+        tool_state: "수리중"
       },
         {
           where: { tool_id: toolId }
         }
       )
+        .then((result) => {
+          result != null ? resolve(result) : resolve(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          resolve("err");
+        })
+    })
+  },
+
+  search: (searchWord) => {
+    return new Promise((resolve) => {
+      Tool.findAll({
+        where: {
+          [Op.or]: [
+            {
+              tool_id: {
+                [Op.like]: "%" + searchWord + "%"
+              }
+            },
+            {
+              tool_name: {
+                [Op.like]: "%" + searchWord + "%"
+              }
+            },
+
+            {
+              tool_code: {
+                [Op.like]: "%" + searchWord + "%"
+              }
+            }
+          ]
+        },
+        attributes: ['tool_use_division', 'tool_name', 'tool_id', 'tool_state'],
+        include : {
+          model: Department,
+          attributes: ['department_name']
+        }
+      })
         .then((result) => {
           result != null ? resolve(result) : resolve(false);
         })

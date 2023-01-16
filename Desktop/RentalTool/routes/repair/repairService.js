@@ -1,5 +1,5 @@
 const {
-    Repair, Tool, Log
+    Repair, Tool, Log, Img
 } = require('../../models');
 
 const moment = require("moment");
@@ -51,9 +51,15 @@ module.exports = {
                 where: {
                     user_id: userId
                 },
-                include: {
-                    model: Tool
-                },
+                include: [{
+                    model: Tool,
+                    include: [
+                        {
+                            model: Img,
+                            attributes: ['img_url']
+                        }
+                    ]
+                }],
                 offset: offset,
                 limit: 12,
                 attributes: ['repair_create_at'],

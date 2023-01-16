@@ -164,5 +164,27 @@ module.exports = {
         res.send(obj);
       }
     })
+  },
+  search: (req, res) => {
+    const searchWord = req.params.searchWord;
+
+    toolService.search(searchWord)
+    .then((result) => {
+      let obj = {};
+
+      if (result == false) {
+        obj["suc"] = false;
+        obj["error"] = errorCode.E07.message;
+        res.send(obj);
+      } else if (result == "err") {
+        obj["suc"] = false;
+        obj["error"] = errorCode.E06.message;
+        res.send(obj);
+      } else {
+        obj['suc'] = true;
+        obj['tool'] = result;
+        res.send(obj);
+      }
+    })
   }
 }

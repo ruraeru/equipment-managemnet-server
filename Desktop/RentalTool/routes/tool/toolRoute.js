@@ -11,6 +11,8 @@ router.get('/viewToolList/:department_id/:page' , authUtil, toolController.viewT
 router.get('/viewTool', authUtil, toolController.viewTool);
 // 기자재 대여 불가 처리
 router.get('/cannotRental/:tool_id', authUtil, toolController.cannotRental);
+// search tool
+router.get('/search/:searchWord', toolController.search)
 // test manager view Tool
 router.get('/managerViewTool/:tool_id', toolController.managerViewTool);
 

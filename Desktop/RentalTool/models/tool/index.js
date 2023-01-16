@@ -15,7 +15,6 @@ module.exports = (sequelize, DataTypes) => {
 
             tool_code : {
                 allowNull : false,
-                unique: true,
                 type: DataTypes.STRING(255)
             },
 

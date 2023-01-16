@@ -112,12 +112,13 @@ module.exports = {
         if (page > 0) {
             offset = 12 * (page - 1);
         }
+        let obj = {};
 
         rentalService.myCurrentRentalList(userId, offset)
             .then(result => {
                 if (result == false) {
                     obj["suc"] = false;
-                    obj["error"] = errorCode.E07.message;
+                    obj["error"] = "no list of rental";
                     res.send(obj);
                 } else if (result == "err") {
                     obj["suc"] = false;
@@ -146,6 +147,36 @@ module.exports = {
                 if (result == false) {
                     obj["suc"] = false;
                     obj["error"] = errorCode.E07.message;
+                    res.send(obj);
+                } else if (result == "err") {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E06.message;
+                    res.send(obj);
+                } else {
+                    obj["suc"] = true;
+                    obj["result"] = result;
+                    res.send(obj);
+                }
+            })
+    },
+
+    viewLog: (req, res) => {
+        const departmentId = req.params.department_id;
+        const page = req.params.page;
+
+        // offset: 이전 item 12개를 skip
+        let offset;
+        if (page > 0) {
+            offset = 12 * (page - 1);
+        }
+
+        rentalService.viewLog(departmentId, offset)
+            .then(result => {
+
+                let obj = {};
+                if (result == false) {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E12.message;
                     res.send(obj);
                 } else if (result == "err") {
                     obj["suc"] = false;

@@ -1,19 +1,28 @@
 const nodemailer = require('nodemailer');
 const senderInfo = require('../config/senderInfo.json');
+const mailTemplateAuth = require('../views/mail_template_auth').mailTemplate;
 const mailTemplate = require('../views/mail_template').mailTemplate;
 
-const getEmailData = (to, authCode) => {
-    let data = {
+const getEmailData = (to, data, form) => {
+    console.log(to);
+    let obj = {
         from: senderInfo.user,
-        to,
-        subject: " ** 기자재 대여 본인인증 이메일입니다. ** ",
-        html: mailTemplate(authCode)
+        to: to,
     }
 
-    return data
+    if (form == "auth") {
+        obj["subject"] = " ** 기자재 대여 본인인증 이메일입니다. ** "
+        obj["html"] = mailTemplateAuth(data)
+    } else if (form == "noti") {
+        obj["subject"] = " ** 기자재 반납 알림 이메일입니다. ** ",
+        obj["html"] = mailTemplate(data)
+
+    }
+
+    return obj
 }
 
-const sendEmail = (to, authCode) => {
+const sendEmail = (to, data, form) => {
     return new Promise((resolve) => {
 
 
@@ -28,16 +37,16 @@ const sendEmail = (to, authCode) => {
             }
         });
 
-        const mail = getEmailData(to, authCode)
+        const mail = getEmailData(to, data, form)
 
         smtpTransport.sendMail(mail, function (error, res) {
             if (error) {
                 console.log(error);
-                
+
                 resolve(false);
             } else {
                 console.log("email sent successfully");
-                
+
                 resolve(true);
             }
 

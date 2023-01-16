@@ -13,33 +13,43 @@ module.exports = {
         userService.login(body, hash)
             .then(result => {
                 let obj = {};
-                if (result) {
+                if (result == "err") {
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E06.message;
+                    res.send(obj);
+                } else if(result == false){
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E08.message;
+                    res.send(obj);
+
+                } else{
                     console.log(result)
                     obj['suc'] = true;
                     obj['login'] = result;
                     obj['token'] = issueToken(result);
                     res.send(obj);
-                } else {
-                    obj['suc'] = false;
-                    obj['err'] = "login err";
-                    res.send(false);
                 }
             })
     },
 
     deleteUser: (req, res) => {
-        const userId = req.params.user_id;
+        const userId = req.body.user_id;
+        const hash = hashing.enc(req.body.user_pw, salt);
 
-        userService.deleteUser(userId)
+        userService.deleteUser(userId, hash)
             .then(result => {
                 let obj = {};
-                if (result) {
-                    obj['suc'] = true;
-                    obj['deleteUser'] = result;
+                if (result == false) {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E08.message;
                     res.send(obj);
-                } else {
-                    obj['suc'] = false;
-                    obj['err'] = "delete user err";
+                } else if (result == "err"){
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E06.message;
+                    res.send(obj);
+                } else{
+                    obj['suc'] = true;
+                    res.send(obj);
                 }
             })
     },
@@ -52,20 +62,21 @@ module.exports = {
         userService.signUp(body, hash)
             .then(result => {
                 let obj = {};
-                if (result == userId) {
-                    console.log(result);
-                    obj['suc'] = false;
-                    obj['err'] = "Is the ID that already exists.";
+
+                if (result == "err"|| false) {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E06.message;
                     res.send(obj);
-                } else if (result) {
-                    console.log(result);
+                  } else if(result == "EXIST") {
+                    obj["suc"] = false;
+                    obj["error"] = "is already exist";
+                    res.send(obj);
+                  }
+                  else {
                     obj['suc'] = true;
+                    obj['result'] = result;
                     res.send(obj);
-                } else {
-                    obj['suc'] = false;
-                    obj['err'] = "sign up error";
-                    res.send(false);
-                }
+                  }
             })
     },
 
@@ -116,40 +127,99 @@ module.exports = {
 
     changeInfo: (req, res) => {
         const body = req.body;
-        const hash = hashing.enc(body.user_pw, salt);
+        const email = req.body.user_email;
 
-        userService.changeInfo(body, hash)
+        let obj = {};
+
+        // req.user_id is decoded token`s user_id
+        if (body.user_id != req.user_id){
+            obj['suc'] = false;
+            obj['error'] = errorCode.E04.message;
+            res.send(obj);
+        }else if( email.indexOf("mjc.ac.kr") === -1){
+            obj['suc'] = false;
+            obj['err'] = "해당 학교의 메일이 아닙니다. ";
+            res.send(obj);
+        }else {        
+            userService.changeInfo(body)
             .then(result => {
-                let obj = {};
-                if (result) {
+                if (result == "err") {
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E06.message;
+                    res.send(obj);
+                } else{
+                    console.log(result)
                     obj['suc'] = true;
-                    obj['changeInfo'] = result;
                     res.send(obj);
                 }
-                else {
-                    obj['suc'] = false;
-                    obj['err'] = "change user`s information err"
-                }
-            })
+            })}
+
+
     },
 
     inquireMyInfo: (req, res) => {
-        const body = req.body;
-        const hash = hashing.enc(body.user_pw, salt);
+        const userId = req.query.user_id;
 
-        userService.inquireMyInfo(body, hash)
-        .then(result => {
-            let obj = {};
-            if (result) {
-                obj['suc'] = true;
-                obj['inquireMyInfo'] = result;
-                res.send(obj);
-            }
-            else {
-                obj['suc'] = false;
-                obj['err'] = "inquire user`s information err"
-            }
+        let obj = {};
+
+        // req.user_id is decoded token`s user_id
+        if (userId != req.user_id){
+            obj['suc'] = false;
+            obj['error'] = errorCode.E04.message;
+            res.send(obj);
+        } else {
+            userService.inquireMyInfo(userId)
+            .then(result => {
+                if (result == "err") {
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E06.message;
+                    res.send(obj);
+                } else if(result == false){
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E08.message;
+                    res.send(obj);
+    
+                } else{
+                    console.log(result)
+                    obj['suc'] = true;
+                    obj['inquireMyInfo'] = result;
+                    res.send(obj);
+                }
+            })
+        }
+
+    },
+
+
+    qlfctAprvl: (req, res) => {
+        const userId = req.query.user_id;
+
+        let obj = {};
+        if(req.license > 1){
+            obj["suc"] = false;
+            obj["result"] = errorCode.E04.message;
+            obj["code"] = "E04"
+            res.send(obj);
+        }else{
+            userService.qlfctAprvl(userId)
+            userService.inquireMyInfo(userId)
+            .then(result => {
+                if (result == "err") {
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E06.message;
+                    res.send(obj);
+                } else if(result == false){
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E08.message;
+                    res.send(obj);
+    
+                } else{
+                    obj['suc'] = true;
+                    res.send(obj);
+                }
         })
-    }
+        }
+
+}
 
 }

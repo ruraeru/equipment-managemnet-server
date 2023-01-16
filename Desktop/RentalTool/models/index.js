@@ -20,7 +20,14 @@ let sequelize = new Sequelize(
             charset: 'utf8',
             collate: 'utf8_general_ci'
         },
-        logging: false
+        logging: false,
+        timezone: config.database.timezone,
+        dialectOptions: {
+            useUTC: false,
+            charset: 'utf8',
+            dateStrings: true,
+            typeCast: true
+        }
     }
 );
 

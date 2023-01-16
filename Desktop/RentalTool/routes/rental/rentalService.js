@@ -1,5 +1,5 @@
 const {
-    Rental, Tool, Log, Department
+    Rental, Tool, Log, Department, Sequelize: { Op }, Img
 } = require("../../models");
 
 const moment = require("moment");
@@ -8,7 +8,40 @@ require("moment-timezone");
 moment.tz.setDefault("Asia/Seoul");
 const errorCode = require('../../config/errorCode');
 const { resolve } = require("path");
+// 반납 기간이 지난 대여 리스트를 미반납으로 변경
+const schedule = require('node-schedule');
+// update at 00:00
+schedule.scheduleJob({ hour: 0, minute: 1 }, () => {
+    const currentTime = moment().format("YYYY-MM-DD");
 
+    Rental.findAll({
+        where: {
+            rental_state: "대여",
+            rental_due_date: {
+                [Op.lt]: currentTime
+            }
+        },
+        attributes: ['rental_id']
+    })
+        .then((result) => {
+            console.log(result)
+
+            for (let i = 0; i < result.length; i++) {
+                Rental.update({
+                    rental_state: "미반납"
+                },
+                    {
+                        where: { rental_id: result[i].rental_id }
+                    })
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        })
+        .catch(err => {
+            console.log(err);
+        })
+})
 module.exports = {
 
     // RENTAL TOOL
@@ -27,8 +60,8 @@ module.exports = {
                         Rental.create({
                             tool_id: body.tool_id,
                             user_id: body.user_id,
-                            rental_date: moment().format("YYYY-MM-DD hh:mm:ss"), // now
-                            rental_due_date: dueDate.format("YYYY-MM-DD 18:00:00"),
+                            rental_date: moment().format("YYYY-MM-DD"), // now
+                            rental_due_date: dueDate.format("YYYY-MM-DD"),
                             // in 7 days from now
                             rental_state: "대여",
                             rental_is_extended: false
@@ -117,7 +150,7 @@ module.exports = {
                                 Log.create({
                                     log_title: "반납",
                                     log_content: `${result.tool_id} 기자재가 반납되었습니다. `,
-                                    log_create_at: moment().format("YYYY-MM-DD hh:mm:ss"),
+                                    log_create_at: moment().format("YYYY-MM-DD"),
                                     department_id: result.department_id
                                 })
                                     .then((logResult) => {
@@ -176,7 +209,7 @@ module.exports = {
                             Log.create({
                                 log_title: "연장",
                                 log_content: `${result.user_id}님께서 ${result.tool_id} 기자재 반납 기간을 ${dueDate}까지 연장했습니다. `,
-                                log_create_at: moment().format("YYYY-MM-DD hh:mm:ss"),
+                                log_create_at: moment().format("YYYY-MM-DD"),
                                 department_id: result.department_id
                             })
                                 .then((logResult) => {
@@ -201,86 +234,122 @@ module.exports = {
 
 
     myCurrentRentalList: (userId, offset) => {
-        return new Promise((resolve) =>{
-            Rental.findAll({
-                where: 
-                {
-                    user_id: userId,
-                    rental_state: "대여"
-                },
-                attributes: ['rental_date', 'rental_due_date'],
-                include: {
-                    model: Tool,
-                    attributes: ['tool_use_division', 'tool_name', 'tool_id'],
-                    include: {
-                        model: Department,
-                        attributes: ['department_name']
-                    }
-                },
-                limit: 12,
-                offset: offset
-            })
-            .then((result) => {
-
-                let objs = [];
-                
-                let days = moment(result[0].rental_due_date).diff(moment(),'days');
-                let Dday;
-
-                for(i = 0; i < result.length; i++){
-
-                    let obj = {};
-                    days =  moment(result[i].rental_due_date).diff(moment(),'days');
-                    
-                    if(days > 0){
-                        Dday = "D - " + days;    
-                    }else if( days == 0) {
-                        Dday = "TODAY"
-                    }else {
-                        Dday = "미반납"
-                    }
-                    
-                    obj['D-day'] =  Dday;
-                    obj['result'] = result[i];
-                    objs.push(obj);
-    
-                }
-                
-
-                result !== null ? resolve(objs) : resolve(false);
-                
-              })
-              .catch((err) => {
-                console.log(err);
-                resolve("err");
-              })
-        })
-    },
-
-    myAllRentalList : (userId, offset) => {
         return new Promise((resolve) => {
             Rental.findAll({
-                where: { user_id : userId},
-                order: [['rental_state', 'ASC']],
-                attributes : ['rental_date', 'rental_state'],
-                include : {
-                    model : Tool,
-                    attributes : ['tool_use_division', 'tool_name', 'tool_id']
+                where:
+                {
+                    user_id: userId,
+                    [Op.or]: [{ rental_state: "대여" }, { rental_state: "미반납" }]
+
                 },
+                order: [['rental_due_date', 'ASC']],
+                include: [{
+                    model: Tool,
+                    attributes: ['tool_use_division', 'tool_name', 'tool_id'],
+                    include: [
+                        {
+                            model: Department,
+                            attributes: ['department_name']
+                        },
+                        {
+                            model: Img,
+                            attributes: ['img_url']
+                        }
+                    ]
+                }],
                 limit: 12,
                 offset: offset
             })
-            .then((result) => {
-                result !== null ? resolve(result) : resolve(false);
-                
-              })
-              .catch((err) => {
-                console.log(err);
-                resolve("err");
-              })
+                .then((result) => {
+
+                    let objs = [];
+
+                    let days;
+                    let Dday;
+
+                    for (i = 0; i < result.length; i++) {
+
+                        let obj = {};
+
+                        days = moment(result[i].rental_due_date).diff(moment(), 'days');
+
+                        if (days > 0) {
+                            Dday = "D - " + days;
+                        } else if (days == 0) {
+                            Dday = "TODAY"
+                        } else {
+                            Dday = "미반납"
+                        }
+
+                        obj['D_day'] = Dday;
+                        obj['result'] = result[i];
+
+                        objs.push(obj);
+
+                    }
+                    //aelim sungho zz
+
+                    result !== null ? resolve(objs) : resolve(false);
+
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                })
         })
     },
 
+    myAllRentalList: (userId, offset) => {
+        return new Promise((resolve) => {
+            Rental.findAll({
+                where: { user_id: userId },
+                order: [['rental_state', 'ASC']],
+                attributes: ['rental_date', 'rental_state'],
+                include: [{
+                    model: Tool,
+                    attributes: ['tool_use_division', 'tool_name', 'tool_id'],
+                    include: [
+                        {
+                            model: Department,
+                            attributes: ['department_name']
+                        },
+                        {
+                            model: Img,
+                            attributes: ['img_url']
+                        }
+                    ]
+                }],
+                limit: 12,
+                offset: offset
+            })
+                .then((result) => {
+                    result !== null ? resolve(result) : resolve(false);
+
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                })
+        })
+    },
+
+    viewLog : (departmentId, offset) => {
+        return new Promise((resolve) => {
+          Log.findAll({
+              where: {  department_id: departmentId },
+              limit: 12,
+              offset: offset,
+              order:[['log_id', 'DESC']]
+            })
+            .then((result) => {
+              result != null ? resolve(result) : resolve(false);
+            })
+            .catch((err) => {
+              console.log(err);
+              resolve("err");
+            })
+        })
+    }
     // notReturned : (departmentId, offset) => {
     //     return new Promise((resolve) => {
     //         Rental.findAll({

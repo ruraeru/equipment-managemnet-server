@@ -14,4 +14,10 @@ module.exports = db => {
         sourceKey : "department_id"
     });
 
+    db.Department.hasMany(db.Log, {
+        foreignKey : "department_id",
+        sourceKey : "department_id"
+    });
+
+
 }

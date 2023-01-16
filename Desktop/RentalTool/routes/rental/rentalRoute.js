@@ -1,4 +1,5 @@
 const express = require('express');
+const rental = require('../../models/rental');
 const router = express.Router();
 const rentalController = require('./rentalController');
 const authUtil = require('../../middleware/authorization').checkToken;
@@ -13,6 +14,8 @@ router.post('/extension', /*authUtil,*/  rentalController.extension);
 router.get('/myCurrentRentalList/:user_id/:page', rentalController.myCurrentRentalList);
 // 내 역대 대여목록 조회
 router.get('/myAllRentalList/:user_id/:page', rentalController.myAllRentalList);
+// inquire log
+router.get('/viewLog/:department_id/:page', rentalController.viewLog)
 // 장기 미반납 기자재 조회
 // router.get('/notReturned/:department_id')
 module.exports = router;

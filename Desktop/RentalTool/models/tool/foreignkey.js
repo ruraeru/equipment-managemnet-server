@@ -5,7 +5,14 @@ module.exports = db => {
         sourceKey : "tool_id"
     }),
 
+    db.Tool.hasOne(db.Img, {
+        foreignKey : "tool_id",
+        sourceKey : "tool_id"
+    }),
+
     db.Tool.belongsTo(db.Department, {
         foreignKey: "department_id"
     })
+
+
 }

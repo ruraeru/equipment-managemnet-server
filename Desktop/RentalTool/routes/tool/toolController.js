@@ -4,26 +4,30 @@ const path = require('path')
 const errorCode = require('../../config/errorCode');
 
 module.exports = {
-  addTool: async (req, res) => {
-    const body = req.body;
-    const imgData = fs
-      .readFileSync(`app${req.file.path.split("app")[1]}`)
-      .toString("base64");
 
-    console.log(imgData)
-    toolService.addTool(body, imgData)
-      .then(result => {
-        let obj = {};
-        if (result) {
-          obj["suc"] = true;
-          obj["result"] = result
-          res.send(obj);
-        } else {
-          obj["suc"] = false;
-          res.send(obj);
-        }
-      })
-  },
+    addTool: async (req, res) => {
+        const body = req.body;
+        console.log(req)
+        const imgData = req.file;
+        
+        toolService.addTool(body, imgData)
+          .then(result => {
+            let obj = {};
+            if (result == "err") {
+              obj["suc"] = false;
+              obj["error"] = errorCode.E06.message;
+              res.send(obj);
+            } else if (result == false) {
+              obj["suc"] = false;
+              obj["error"] = result + "is already exist";
+              res.send(obj);
+            } else {
+              obj['suc'] = true;
+              obj['result'] = result;
+              res.send(obj);
+            }
+          })
+      },
 
   viewToolList: (req, res) => {
     const departmentId = req.params.department_id;
@@ -39,15 +43,16 @@ module.exports = {
       .then((result) => {
         let obj = {};
 
-        if (result == false) {
-          obj["suc"] = false;
-          obj["error"] = errorCode.E09.message;
-          res.send(obj);
-        } else if (result == "err") {
+        if (result == "err"|| false) {
           obj["suc"] = false;
           obj["error"] = errorCode.E06.message;
           res.send(obj);
-        } else {
+        } else if(result == "EXIST") {
+          obj["suc"] = false;
+          obj["error"] = "'tool_id' or 'tool_code' is already exist";
+          res.send(obj);
+        }
+        else {
           obj['suc'] = true;
           obj['result'] = result;
           res.send(obj);
@@ -56,11 +61,11 @@ module.exports = {
   },
 
   viewTool: (req, res) => {
-    const toolId = req.params.tool_id;
+    const toolId = req.query.tool_id;
     const license = req.user_license;
 
-    if (license > 2) {
-      toolService.viewTool(toolId)
+    // if (license > 2) {
+      toolService.viewTool(toolId, license)
         .then((result) => {
           let obj = {};
 
@@ -78,34 +83,34 @@ module.exports = {
             res.send(obj);
           }
         })
-    } else if (license > 0) {
-      toolService.managerViewTool(toolId)
-        .then((result) => {
-          let obj = {};
+    // } else if (license > 0) {
+    //   toolService.managerViewTool(toolId)
+    //     .then((result) => {
+    //       let obj = {};
 
-          if (result == false) {
-            obj["suc"] = false;
-            obj["error"] = errorCode.E07.message;
-            res.send(obj);
-          } else if (result == "err") {
-            obj["suc"] = false;
-            obj["error"] = errorCode.E06.message;
-            res.send(obj);
-          } else {
-            obj['suc'] = true;
-            obj['tool'] = result[0].tool;
-            obj['user'] = result[0].user.user_name;
-            obj['rental_date'] = result[0].rental_date;
-            obj['rental_due_date'] = result[0].rental_due_date;
-
-            // = {
-            //   rental_date: result[0].rental_date,
-            //   rental_due_date: result[0].rental_due_date
-            // };
-            res.send(obj);
-          }
-        })
-    } 
+    //       if (result == false) {
+    //         obj["suc"] = false;
+    //         obj["error"] = errorCode.E07.message;
+    //         res.send(obj);
+    //       } else if (result == "err") {
+    //         obj["suc"] = false;
+    //         obj["error"] = errorCode.E06.message;
+    //         res.send(obj);
+    //       } else {
+    //         // obj['suc'] = true;
+    //         // obj['tool'] = result[0].tool;
+    //         // obj['user'] = result[0].user.user_name;
+    //         // obj['rental_date'] = result[0].rental_date;
+    //         // obj['rental_due_date'] = result[0].rental_due_date;
+  
+    //         // = {
+    //         //   rental_date: result[0].rental_date,
+    //         //   rental_due_date: result[0].rental_due_date
+    //         // };
+    //         res.send(result);
+    //       }
+    //     })
+    // } 
   },
 
   // 관리자가 대여 목록에서 '기자재 자세히 보기'를 눌렀을 경우, 
@@ -126,24 +131,28 @@ module.exports = {
           obj["error"] = errorCode.E06.message;
           res.send(obj);
         } else {
-          obj['suc'] = true;
-          obj['tool'] = result[0].tool;
-          obj['user'] = result[0].user.user_name;
-          obj['rental_date'] = result[0].rental_date;
-          obj['rental_due_date'] = result[0].rental_due_date;
+          // obj['suc'] = true;
+          // obj['tool'] = result[0].tools;
+          // obj['user'] = result[0].users.user_name;
+          // obj['rental_date'] = result[0].rental_date;
+          // obj['rental_due_date'] = result[0].rental_due_date;
 
           // = {
           //   rental_date: result[0].rental_date,
           //   rental_due_date: result[0].rental_due_date
           // };
-          res.send(obj);
+          res.send(result);
         }
       })
   },
 
   cannotRental : (req, res) => {
     const toolId = req.params.tool_id;
+    const license = req.user_license;
 
+    if(license > 2) {
+        res.send("권한이 없습니다")
+    }
     toolService.cannotRental(toolId)
     .then(result => {
       let obj = {};

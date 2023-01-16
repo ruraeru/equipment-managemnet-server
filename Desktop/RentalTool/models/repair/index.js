@@ -13,8 +13,9 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING(255)
             },
 
-            repair_answer : {
-                type: DataTypes.STRING(255)
+            repair_create_at : {
+                allowNull: false,
+                type: DataTypes.DATE
             },
 
             is_repaired : {

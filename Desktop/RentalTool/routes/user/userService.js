@@ -1,5 +1,5 @@
 const {
-    User
+    User, Department
 } = require("../../models");
 const moment = require("moment");
 const hashing = require("../../config/hashing");
@@ -20,7 +20,7 @@ module.exports = {
                     result !== null ? resolve(result) : resolve(false);
                 })
                 .catch((err) => {
-                    resolve(false);
+                    resolve("err");
                     console.log(err);
                 });
         })
@@ -40,8 +40,8 @@ module.exports = {
                     user_student_number: body.user_student_number,
                     user_name: body.user_name,
                     user_phone_number: body.user_phone_number,
-                    user_created_at: moment().format("YYYY-MM-DD hh:mm:ss"),
-                    user_license: body.user_license,
+                    user_created_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+                    user_license: 3,
                     department_id: body.department_id
                 },
                 raw: true
@@ -51,7 +51,7 @@ module.exports = {
                         resolve(result);
                         console.log(result);
                     } else if (!result[1]) {
-                        resolve(body.user_id);
+                        resolve("EXIST");
                     } else {
                         console.log(false);
                         resolve(false);
@@ -64,11 +64,12 @@ module.exports = {
         });
     },
 
-    deleteUser: (userId) => {
+    deleteUser: (userId, hash) => {
         return new Promise((resolve) => {
             User.destroy({
                 where: {
-                    user_id: userId
+                    user_id: userId,
+                    user_pw: hash
                 },
             })
                 .then((result) => {
@@ -119,17 +120,17 @@ module.exports = {
         })
     },
 
-    changeInfo: (body, hash) => { // hash -> 정보 변경 시, 비밀번호 입력
+    changeInfo: (body) => { // hash -> 정보 변경 시, 비밀번호 입력
         return new Promise((resolve) => {
             User.update(
                 {
-                    user_id: body.user_id,
-                    email: body.user_email
+                    user_email: body.user_email,
+                    user_name: body.user_name,
+                    user_phone_number: body.user_phone_number
                 },
                 {
                     where: {
-                        user: body.user_id,
-                        password: hash
+                        user_id: body.user_id
                     }
                 }
             )
@@ -137,18 +138,22 @@ module.exports = {
                     result !== null ? resolve(result) : resolve(false);
                 })
                 .catch((err) => {
-                    resolve(false);
+                    resolve("err");
                     console.log(err);
                 });
         })
     },
 
-    inquireMyInfo: (body, hash) => {
+    inquireMyInfo: (userId) => {
         return new Promise((resolve) => {
             User.findOne({
                 where: {
-                    user_id: body.user_id,
-                    user_pw: hash
+                    user_id: userId
+                },
+                attributes: {exclude: ['user_pw', 'user_created_at', 'user_license']},
+                include: {
+                    model : Department,
+                    attributes: ['department_name']
                 }
             }
             )
@@ -156,9 +161,27 @@ module.exports = {
                     result !== null ? resolve(result) : resolve(false);
                 })
                 .catch((err) => {
-                    resolve(false);
+                    resolve("err");
                     console.log(err);
                 });
         })
-    }
+    },
+
+    qlfctAprvl : (userId) => {
+        return new Promise((resolve) => {
+            User.update({
+                user_license: 2
+            },{
+                where: { user_id: userId},
+                
+            })
+            .then((result) => {
+                result !== null ? resolve(result) : resolve(false);
+            })
+            .catch((err) => {
+                resolve("err");
+                console.log(err);
+            });
+        })
+    } 
 }

@@ -9,12 +9,12 @@ module.exports = {
 
         let obj = {};
 
-        // if(req.user_license >= 3){
-        //     obj["suc"] = false;
-        //     obj["result"]=errorCode.E04.message;
-        //     obj["code"]="E04"
-        //     res.send(obj);
-        // }else{
+        if(req.user_license > 2){
+            obj["suc"] = false;
+            obj["result"] = errorCode.E04.message;
+            obj["code"] = "E04"
+            res.send(obj);
+        }else{
         rentalService.rentalTool(body)
             .then(result => {
                 if (result == false) {
@@ -35,7 +35,7 @@ module.exports = {
                     res.send(obj);
                 }
             })
-        //}
+        }
     },
 
     returnTool: (req, res) => {
@@ -43,12 +43,13 @@ module.exports = {
 
         let obj = {};
 
-        if (req.user_license >= 3) {
+
+        if(req.user_license > 2){
             obj["suc"] = false;
             obj["result"] = errorCode.E04.message;
             obj["code"] = "E04"
             res.send(obj);
-        } else {
+        }else{
             rentalService.returnTool(body)
                 .then(result => {
                     if (result == false) {
@@ -104,7 +105,7 @@ module.exports = {
     },
 
     myCurrentRentalList: (req, res) => {
-        const userId = req.params.user_id;
+        const userId = req.user_id;
         const page = req.params.page;
 
         // offset: 이전 item 10개를 skip
@@ -131,7 +132,7 @@ module.exports = {
     },
 
     myAllRentalList: (req, res) => {
-        const userId = req.params.user_id;
+        const userId = req.user_id;
         const page = req.params.page;
 
         // offset: 이전 item 10개를 skip
@@ -161,7 +162,7 @@ module.exports = {
     },
 
     viewLog: (req, res) => {
-        const departmentId = req.params.department_id;
+        const departmentId = req.department_id;
         const page = req.params.page;
 
         // offset: 이전 item 12개를 skip
@@ -170,6 +171,12 @@ module.exports = {
             offset = 12 * (page - 1);
         }
 
+        if(req.user_license > 2){
+            obj["suc"] = false;
+            obj["result"] = errorCode.E04.message;
+            obj["code"] = "E04"
+            res.send(obj);
+        }else{
         rentalService.viewLog(departmentId, offset)
             .then(result => {
 
@@ -177,6 +184,69 @@ module.exports = {
                 if (result == false) {
                     obj["suc"] = false;
                     obj["error"] = errorCode.E12.message;
+                    res.send(obj);
+                } else if (result == "err") {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E06.message;
+                    res.send(obj);
+                } else {
+                    obj["suc"] = true;
+                    obj["result"] = result;
+                    res.send(obj);
+                }
+            })
+        }
+    },
+
+    searchLog: (req, res) => {
+        const searchWord = req.params.searchWord;
+        const departmentId = req.department_id;
+        const page = req.params.page;
+
+        // offset: 이전 item 12개를 skip
+        let offset;
+        if (page > 0) {
+            offset = 12 * (page - 1);
+        }
+
+        rentalService.searchLog(searchWord, departmentId, offset)
+            .then(result => {
+
+                let obj = {};
+                if (result == false) {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E12.message;
+                    res.send(obj);
+                } else if (result == "err") {
+                    obj["suc"] = false;
+                    obj["error"] = errorCode.E06.message;
+                    res.send(obj);
+                } else {
+                    obj["suc"] = true;
+                    obj["result"] = result;
+                    res.send(obj);
+                }
+            })
+    },
+
+    searchMyRental: (req, res) => {
+        const searchWord = req.params.searchWord;
+        const userId = req.user_id;
+        const page = req.params.page;
+
+        // offset: 이전 item 12개를 skip
+        let offset;
+        if (page > 0) {
+            offset = 12 * (page - 1);
+        }
+
+        rentalService.searchMyRental(searchWord, userId, offset)
+            .then(result => {
+
+                let obj = {};
+                if (result == false) {
+                    obj["suc"] = false;
+                    obj["error"] = "not exist";
                     res.send(obj);
                 } else if (result == "err") {
                     obj["suc"] = false;

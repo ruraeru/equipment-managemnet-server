@@ -59,6 +59,7 @@ const verifyToken = {
             else {
                 req.user_id = user.user_id;           // to pass user_id to next function
                 req.user_license = user.user_license; // to pass user_license to next function
+                req.department_id = user.department_id;
                 console.log("token`s user_id = " + user.user_id);
                 console.log("token`s user_license = " + user.user_license);
                 next();

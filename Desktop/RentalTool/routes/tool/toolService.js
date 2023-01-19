@@ -1,5 +1,5 @@
 const {
-  Tool, Img, Department, Rental, User, Sequelize: { Op }
+  Tool, Img, Department, Rental, Repair, User, Sequelize: { Op }
 } = require('../../models');
 
 const moment = require("moment");
@@ -254,10 +254,11 @@ module.exports = {
     })
   },
 
-  search: (searchWord) => {
+  searchTool: (searchWord, departmentId, offset) => {
     return new Promise((resolve) => {
       Tool.findAll({
         where: {
+          department_id: departmentId,
           [Op.or]: [
             {
               tool_id: {
@@ -281,7 +282,9 @@ module.exports = {
         include : {
           model: Department,
           attributes: ['department_name']
-        }
+        },
+                        limit: 12,
+                offset: offset
       })
         .then((result) => {
           result != null ? resolve(result) : resolve(false);

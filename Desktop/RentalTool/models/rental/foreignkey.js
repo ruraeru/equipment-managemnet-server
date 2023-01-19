@@ -5,5 +5,5 @@ module.exports = db => {
 
     db.Rental.belongsTo(db.Tool, {
         foreignKey : "tool_id"
-    })
+    });
 }

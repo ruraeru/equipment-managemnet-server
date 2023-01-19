@@ -56,8 +56,14 @@ module.exports = {
 
     signUp: (req, res) => {
         const body = req.body;
-        const userId = req.body.user_id;
+        const license = req.body.user_license;
         const hash = hashing.enc(body.user_pw, salt);
+
+        // 회원가입 승인 신청을 조회하기 위한 column 
+        // req의 user_license가 3보다 작을 시 user_is_approved를 false로 설정.
+        if(license < 3){
+            body.user_is_approved = false;
+        }
 
         userService.signUp(body, hash)
             .then(result => {
@@ -158,16 +164,10 @@ module.exports = {
     },
 
     inquireMyInfo: (req, res) => {
-        const userId = req.query.user_id;
+        const userId = req.user_id;
 
         let obj = {};
 
-        // req.user_id is decoded token`s user_id
-        if (userId != req.user_id){
-            obj['suc'] = false;
-            obj['error'] = errorCode.E04.message;
-            res.send(obj);
-        } else {
             userService.inquireMyInfo(userId)
             .then(result => {
                 if (result == "err") {
@@ -186,7 +186,7 @@ module.exports = {
                     res.send(obj);
                 }
             })
-        }
+        
 
     },
 
@@ -195,14 +195,13 @@ module.exports = {
         const userId = req.query.user_id;
 
         let obj = {};
-        if(req.license > 1){
+        if(req.user_license > 1){
             obj["suc"] = false;
             obj["result"] = errorCode.E04.message;
             obj["code"] = "E04"
             res.send(obj);
         }else{
             userService.qlfctAprvl(userId)
-            userService.inquireMyInfo(userId)
             .then(result => {
                 if (result == "err") {
                     obj['suc'] = false;
@@ -219,7 +218,78 @@ module.exports = {
                 }
         })
         }
+    },
 
-}
+    approvalRequestList: (req, res) => {
+        const departmentId = req.department_id;
+        const page = req.params.page;
+        let offset;
+        if (page > 0) {
+            offset = 12 * (page - 1);
+        }
+        let obj = {}
+
+        if(req.user_license > 1){
+            obj["suc"] = false;
+            obj["result"] = errorCode.E04.message;
+            obj["code"] = "E04"
+            res.send(obj);
+        }else{
+            userService.approvalRequestList(departmentId, offset)
+            .then(result => {
+                if (result == "err") {
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E06.message;
+                    res.send(obj);
+                } else if(result == false){
+                    obj['suc'] = false;
+                    obj['err'] = 'not exist';
+                    res.send(obj);
+    
+                } else{
+                    obj['suc'] = true;
+                    obj['result'] = result;
+                    res.send(obj);
+                }
+        })
+        }
+    },
+
+    searchNotApprovedList: (req, res) => {
+        const departmentId = req.department_id;
+        const searchWord = req.params.searchWord;
+
+        const page = req.params.page;
+        let offset;
+        if (page > 0) {
+            offset = 12 * (page - 1);
+        }
+        let obj = {}
+
+        if(req.user_license > 1){
+            obj["suc"] = false;
+            obj["result"] = errorCode.E04.message;
+            obj["code"] = "E04"
+            res.send(obj);
+        }else{
+            userService.searchNotApprovedList(searchWord, departmentId, offset)
+            .then(result => {
+                if (result == "err") {
+                    obj['suc'] = false;
+                    obj['err'] = errorCode.E06.message;
+                    res.send(obj);
+                } else if(result == false){
+                    obj['suc'] = false;
+                    obj['err'] = 'not exist';
+                    res.send(obj);
+    
+                } else{
+                    obj['suc'] = true;
+                    obj['result'] = result;
+                    res.send(obj);
+                }
+        })
+        }
+    }
 
 }

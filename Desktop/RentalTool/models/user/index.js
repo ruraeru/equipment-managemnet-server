@@ -41,6 +41,11 @@ module.exports = (sequelize, DataTypes) => {
             user_license : {
                 allowNull: false,
                 type : DataTypes.INTEGER
+            },
+
+            user_is_approved: {
+                allowNull: true,
+                type: DataTypes.BOOLEAN
             }
         },
         {

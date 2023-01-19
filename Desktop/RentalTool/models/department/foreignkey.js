@@ -19,5 +19,4 @@ module.exports = db => {
         sourceKey : "department_id"
     });
 
-
 }

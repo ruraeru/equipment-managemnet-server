@@ -10,6 +10,12 @@ module.exports = {
         console.log(req)
         const imgData = req.file;
         
+        if(req.user_license > 2){
+          obj["suc"] = false;
+          obj["result"] = errorCode.E04.message;
+          obj["code"] = "E04"
+          res.send(obj);
+      }else{
         toolService.addTool(body, imgData)
           .then(result => {
             let obj = {};
@@ -27,10 +33,11 @@ module.exports = {
               res.send(obj);
             }
           })
+        }
       },
 
   viewToolList: (req, res) => {
-    const departmentId = req.params.department_id;
+    const departmentId = req.department_id;
     const page = req.params.page;
 
     // offset: 이전 item 12개를 skip
@@ -148,11 +155,13 @@ module.exports = {
 
   cannotRental : (req, res) => {
     const toolId = req.params.tool_id;
-    const license = req.user_license;
 
-    if(license > 2) {
-        res.send("권한이 없습니다")
-    }
+    if(req.user_license > 2){
+      obj["suc"] = false;
+      obj["result"] = errorCode.E04.message;
+      obj["code"] = "E04"
+      res.send(obj);
+  }else{
     toolService.cannotRental(toolId)
     .then(result => {
       let obj = {};
@@ -164,11 +173,19 @@ module.exports = {
         res.send(obj);
       }
     })
+  }
   },
-  search: (req, res) => {
+  searchTool: (req, res) => {
     const searchWord = req.params.searchWord;
+    const departmentId = req.department_id
+    const page = req.params.page;
 
-    toolService.search(searchWord)
+    // offset: 이전 item 12개를 skip
+    let offset;
+    if (page > 0) {
+      offset = 12 * (page - 1);
+    }
+    toolService.searchTool(searchWord, departmentId, offset)
     .then((result) => {
       let obj = {};
 

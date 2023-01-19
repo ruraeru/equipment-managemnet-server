@@ -1,5 +1,5 @@
 const {
-    Repair, Tool, Log, Img
+    Repair, Tool, Log, Img, Sequelize: { Op }
 } = require('../../models');
 
 const moment = require("moment");
@@ -86,50 +86,196 @@ module.exports = {
 
         })
     },
-    
+
     viewRepair: (repairId) => {
         return new Promise((resolve) => {
             Repair.findOne({
                 where: {
                     repair_id: repairId
                 },
-                include:{
+                include: {
                     model: Tool
                 }
             })
-            .then((result) => {
+                .then((result) => {
 
-                result != null ? resolve(result) : resolve(false);
-            })
-            .catch((err) => {
-                console.log(err);
-                resolve("err");
-            });  
+                    result != null ? resolve(result) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                });
         })
     },
 
-    viewRepairList: (offset) => {
+    viewRepairList: (departmentId, offset) => {
         return new Promise((resolve) => {
             Repair.findAll({
-                where: 
-                { 
-                    is_repaired : 0
-                },
                 limit: 12,
                 offset: offset,
-                include:{
-                    model: Tool
+                include: {
+                    model: Tool,
+                    where:
+                    {
+                        department_id: departmentId
+                    },
                 },
-                order: [['repair_id', 'DESC']]
-            })
-            .then((result) => {
 
-                result != null ? resolve(result) : resolve(false);
+                order: [[Tool, 'tool_state', 'ASC']],
+
             })
-            .catch((err) => {
-                console.log(err);
-                resolve("err");
-            });  
+                .then((result) => {
+                    let obj_sort = result.filter(item => item.tool_state == "대여불가")
+
+                    result.forEach(element => {
+                        if (element.tool_state == "대여불가") {
+                            delete element
+                        }
+                    });
+
+                    obj_sort.forEach(element => {
+                        result.push(element)
+                    });
+
+
+                    let obj = [];
+
+                    result.forEach(element => {
+                        if (element != null) {
+                            obj.push(element);
+                        }
+                    });
+
+                    obj != null ? resolve(obj) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                });
+        })
+    },
+
+    searchRequestedRepair: (searchWord, departmentId, offset) => {
+        return new Promise((resolve) => {
+            Repair.findAll({
+                include: [{
+                    model: Tool,
+                    where: {
+                        department_id: departmentId,
+                        [Op.or]: [
+                            {
+                                tool_id: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            },
+                            {
+                                tool_name: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            },
+
+                            {
+                                tool_state: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            }
+                        ]
+                    }
+                }],
+                // attributes: ['tool_use_division', 'tool_name', 'tool_id', 'tool_state'],
+                limit: 12,
+                offset: offset,
+                order: [[Tool, 'tool_state', 'ASC']],
+
+            })
+                .then((result) => {
+                    let obj_sort = result.filter(item => item.tool_state == "대여불가")
+
+                    result.forEach(element => {
+                        if (element.tool_state == "대여불가") {
+                            delete element
+                        }
+                    });
+
+                    obj_sort.forEach(element => {
+                        result.push(element)
+                    });
+
+
+                    let obj = [];
+
+                    result.forEach(element => {
+                        if (element != null) {
+                            obj.push(element);
+                        }
+                    });
+
+                    obj != null ? resolve(obj) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                });
+        })
+    },
+
+    searchMyRepair: (searchWord, userId, offset) => {
+        return new Promise((resolve) => {
+            Repair.findAll({
+                where: {
+                    user_id: userId
+                },
+                include: [{
+                    model: Tool,
+                    where: {
+                        [Op.or]: [
+                            {
+                                tool_id: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            },
+                            {
+                                tool_name: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            },
+                        ]
+                    }
+                }],
+                // attributes: ['tool_use_division', 'tool_name', 'tool_id', 'tool_state'],
+                limit: 12,
+                offset: offset,
+                order: [[Tool, 'tool_state', 'ASC']],
+
+            })
+                .then((result) => {
+                    let obj_sort = result.filter(item => item.tool_state == "대여불가")
+
+                    result.forEach(element => {
+                        if (element.tool_state == "대여불가") {
+                            delete element
+                        }
+                    });
+
+                    obj_sort.forEach(element => {
+                        result.push(element)
+                    });
+
+
+                    let obj = [];
+
+                    result.forEach(element => {
+                        if (element != null) {
+                            obj.push(element);
+                        }
+                    });
+
+                    obj != null ? resolve(obj) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                });
         })
     },
 }

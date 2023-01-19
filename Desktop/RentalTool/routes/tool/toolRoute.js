@@ -4,15 +4,15 @@ const toolController = require('./toolController');
 const authUtil = require('../../middleware/authorization').checkToken;
 const upload = require('../../middleware/upload');
 // 기자재 추가
-router.post('/addTool', upload.single('tool_image') , toolController.addTool);
+router.post('/addTool', upload.single('tool_image') , authUtil,toolController.addTool);
 // 학과 기자재 조회
-router.get('/viewToolList/:department_id/:page' , authUtil, toolController.viewToolList);
+router.get('/viewToolList/:page' , authUtil, toolController.viewToolList);
 // 기자재 자세히 보기
 router.get('/viewTool', authUtil, toolController.viewTool);
 // 기자재 대여 불가 처리
 router.get('/cannotRental/:tool_id', authUtil, toolController.cannotRental);
 // search tool
-router.get('/search/:searchWord', toolController.search)
+router.get('/searchTool/:searchWord/:page', authUtil,toolController.searchTool)
 // test manager view Tool
 router.get('/managerViewTool/:tool_id', toolController.managerViewTool);
 

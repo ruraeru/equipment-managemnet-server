@@ -19,5 +19,8 @@ router.post('/changeInfo', authUtil, userController.changeInfo);
 router.get('/inquireMyInfo', authUtil ,userController.inquireMyInfo);
 // approve 2`s license
 router.get('/qlfctAprvl', authUtil, userController.qlfctAprvl);
-
+// inquire not approved license list
+router.get('/approvalRequestList/:page', authUtil, userController.approvalRequestList);
+//
+router.get('/searchNotApprovedList/:searchWord/:page', authUtil, userController.searchNotApprovedList)
 module.exports = router;

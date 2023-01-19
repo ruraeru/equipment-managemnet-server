@@ -14,6 +14,7 @@ module.exports = {
         const payload = {
             user_id: user.user_id,                             // private claim, for identifying user
             user_license: user.user_license,                   // private claim, for identifying user's license
+            department_id: user.department_id,                 // private claim, for identifying user's department
             exp: Math.floor(Date.now() / 1000) + (60 * 60 * 6) // registed claim, token's expireation time, 6 hours
         };
 

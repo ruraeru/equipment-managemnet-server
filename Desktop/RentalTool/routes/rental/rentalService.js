@@ -10,6 +10,7 @@ const errorCode = require('../../config/errorCode');
 const { resolve } = require("path");
 // 반납 기간이 지난 대여 리스트를 미반납으로 변경
 const schedule = require('node-schedule');
+const department = require("../../models/department");
 // update at 00:00
 schedule.scheduleJob({ hour: 0, minute: 1 }, () => {
     const currentTime = moment().format("YYYY-MM-DD");
@@ -208,7 +209,7 @@ module.exports = {
                         .then(() => {
                             Log.create({
                                 log_title: "연장",
-                                log_content: `${result.user_id}님께서 ${result.tool_id} 기자재 반납 기간을 ${dueDate}까지 연장했습니다. `,
+                                log_content: `${result.user_id}님께서 ${result.tool_id} 기자재 반납 기간을 ${dueDate.format("YYYY-MM-DD")}까지 연장했습니다. `,
                                 log_create_at: moment().format("YYYY-MM-DD"),
                                 department_id: result.department_id
                             })
@@ -333,23 +334,232 @@ module.exports = {
         })
     },
 
-    viewLog : (departmentId, offset) => {
+    viewLog: (departmentId, offset) => {
         return new Promise((resolve) => {
-          Log.findAll({
-              where: {  department_id: departmentId },
-              limit: 12,
-              offset: offset,
-              order:[['log_id', 'DESC']]
+            Log.findAll({
+                where: { department_id: departmentId },
+                limit: 12,
+                offset: offset,
+                order: [['log_id', 'DESC']]
             })
-            .then((result) => {
-              result != null ? resolve(result) : resolve(false);
-            })
-            .catch((err) => {
-              console.log(err);
-              resolve("err");
-            })
+                .then((result) => {
+                    result != null ? resolve(result) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                })
         })
-    }
+    },
+
+    searchLog: (searchWord, departmentId, offset) => {
+        return new Promise((resolve) => {
+            Log.findAll({
+                where: {
+                    department_id: departmentId,
+                    [Op.or]: [
+                        {
+                            log_id: {
+                                [Op.like]: "%" + searchWord + "%"
+                            }
+                        },
+                        {
+                            log_title: {
+                                [Op.like]: "%" + searchWord + "%"
+                            }
+                        },
+
+                        // {
+                        //     log_content: {
+                        //         [Op.like]: "%" + searchWord + "%"
+                        //     }
+                        // }
+                    ]
+                },
+                limit: 12,
+                offset: offset,
+                order: [['log_id', 'DESC']]
+            })
+                .then((result) => {
+                    result != null ? resolve(result) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                })
+        })
+    },
+
+
+    searchRental: (userId, searchWord, offset) => {
+        return new Promise((resolve) => {
+            Rental.findAll({
+                where: {
+                    user_id: userId,
+                    [Op.or]: [
+                        {
+                            tool_id: {
+                                [Op.like]: "%" + searchWord + "%"
+                            }
+                        },
+                        {
+                            tool_name: {
+                                [Op.like]: "%" + searchWord + "%"
+                            }
+                        },
+                        {
+
+                        }
+                    ]
+                },
+                limit: 12,
+                offset: offset,
+                order: [['log_id', 'DESC']]
+            })
+                .then((result) => {
+                    result != null ? resolve(result) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                })
+        })
+    },
+    searchMyRental: (searchWord, userId, offset) => {
+        return new Promise((resolve) => {
+            Rental.findAll({
+                where: {
+                    user_id: userId,
+                    // [Op.or]: [
+                    //     {
+                    //         rental_state: {
+                    //             [Op.like]: "%" + searchWord + "%"
+                    //         }
+                    //     },
+                    // {
+                    //     rental_due_date: {
+                    //         [Op.like]: "%" + searchWord + "%"
+                    //     }
+                    // },
+
+                    // ]
+                },
+                include: [{
+                    model: Tool,
+                    where: {
+                        [Op.or]: [
+                            {
+                                tool_id: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            },
+                            {
+                                tool_name: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            },
+                        ]
+                    }
+                }],
+                limit: 12,
+                offset: offset,
+                order: [[Tool, 'tool_state', 'ASC']],
+
+            })
+                .then((result) => {
+                    let obj_sort = result.filter(item => item.tool_state == "대여불가")
+
+                    result.forEach(element => {
+                        if (element.tool_state == "대여불가") {
+                            delete element
+                        }
+                    });
+
+                    obj_sort.forEach(element => {
+                        result.push(element)
+                    });
+
+
+                    let obj = [];
+
+                    result.forEach(element => {
+                        if (element != null) {
+                            obj.push(element);
+                        }
+                    });
+
+                    obj != null ? resolve(obj) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                });
+        })
+    },
+
+    searchMyRentalTool: (searchWord, userId, offset) => {
+        return new Promise((resolve) => {
+            Rental.findAll({
+                where: {
+                    user_id: userId,
+                },
+                include: [{
+                    model: Tool,
+                    where: {
+                        [Op.or]: [
+                            {
+                                tool_id: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            },
+                            {
+                                tool_name: {
+                                    [Op.like]: "%" + searchWord + "%"
+                                }
+                            },
+                            // {
+                            //     rental_state: {
+                            //         [Op.col]: `rentals.rental_state`
+                            //     }
+                            // }
+                        ]
+                    }
+                }],
+                limit: 12,
+                offset: offset,
+                order: [[Tool, 'tool_state', 'ASC']],
+
+            })
+                .then((result) => {
+                    let obj_sort = result.filter(item => item.tool_state == "대여불가")
+
+                    result.forEach(element => {
+                        if (element.tool_state == "대여불가") {
+                            delete element
+                        }
+                    });
+
+                    obj_sort.forEach(element => {
+                        result.push(element)
+                    });
+
+
+                    let obj = [];
+
+                    result.forEach(element => {
+                        if (element != null) {
+                            obj.push(element);
+                        }
+                    });
+
+                    obj != null ? resolve(obj) : resolve(false);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    resolve("err");
+                });
+        })
+    },
     // notReturned : (departmentId, offset) => {
     //     return new Promise((resolve) => {
     //         Rental.findAll({
